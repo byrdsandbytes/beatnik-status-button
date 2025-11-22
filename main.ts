@@ -1,94 +1,63 @@
-import { Gpio } from 'onoff';
+import { version, Chip, Line } from 'node-libgpiod';
 
-// --- Konfiguration der Pins (BCM Nummerierung) ---
-const PIN_RED = 17;
-const PIN_GREEN = 27;
-const PIN_BLUE = 22;
-const PIN_BUTTON = 26;
+// --- Pin-Konfiguration (BCM-Nummerierung) ---
+const LED_PIN = 17; // Rote LED
+const BLINK_COUNT = 20; // Anzahl der Zustandswechsel (10-maliges Blinken)
+const BLINK_INTERVAL = 500; // Intervall in Millisekunden
 
-// --- Initialisierung ---
+// --- Globale Referenzen, um Garbage Collection zu verhindern ---
+// Die libgpiod-Objekte müssen im globalen Gültigkeitsbereich bleiben,
+// solange sie verwendet werden, um zu verhindern, dass der Garbage Collector
+// sie vorzeitig bereinigt.
+const gpios = {
+    chip: new Chip(0),
+    line: null as Line | null,
+};
 
-// --- Initialisierung ---
-
-let ledRed: Gpio;
-let ledGreen: Gpio;
-let ledBlue: Gpio;
-let button: Gpio;
+function cleanup() {
+    console.log("\nBeende und räume auf...");
+    if (gpios.line) {
+        gpios.line.setValue(0); // LED ausschalten (Annahme: Active High)
+        gpios.line.release();
+    }
+    console.log("GPIOs freigegeben. Auf Wiedersehen!");
+    process.exit(0);
+}
 
 try {
-    // LEDs als Ausgang ('out')
-    // Wir setzen sie initial auf 1 (HIGH), damit sie AUS sind (wegen Common Anode)
-    ledRed = new Gpio(PIN_RED, 'out');
-    ledGreen = new Gpio(PIN_GREEN, 'out');
-    ledBlue = new Gpio(PIN_BLUE, 'out');
+    console.log(`Verwende node-libgpiod Version: ${version}`);
 
-    // Button als Eingang ('in')
-    // 'falling' bedeutet: Wir horchen auf den Moment, wenn der Knopf gedrückt wird (Verbindung zu GND)
-    // debounceTimeout: Verhindert, dass ein Druck als 10x Drücken erkannt wird (Entprellen)
-    button = new Gpio(PIN_BUTTON, 'in', 'falling', { debounceTimeout: 50 });
-} catch (err: any) {
-    console.error("Fehler beim Initialisieren der GPIOs:", err.message);
-    if (err.code === 'EINVAL') {
-        console.error("\n--- FEHLER DIAGNOSE ---");
-        console.error("Der Fehler 'EINVAL' beim Exportieren von GPIOs deutet oft darauf hin, dass:");
-        console.error("1. Du einen Raspberry Pi 5 verwendest (dieser nutzt einen anderen GPIO-Chip).");
-        console.error("2. Die Pin-Nummer für dieses Gerät ungültig ist.");
-        console.error("3. Der Pin bereits vom Kernel belegt ist.");
-        console.error("-----------------------\n");
-    }
+    // LED-Leitung initialisieren
+    gpios.line = new Line(gpios.chip, LED_PIN);
+    gpios.line.requestOutputMode();
+
+    console.log(`GPIO ${LED_PIN} ist bereit. Starte Blinken...`);
+
+    let count = BLINK_COUNT;
+
+    const blink = () => {
+        if (count <= 0) {
+            cleanup();
+            return;
+        }
+
+        // Wert umschalten (0 oder 1)
+        const value = count % 2;
+        gpios.line?.setValue(value);
+        console.log(`LED ${value === 1 ? 'AN' : 'AUS'}`);
+
+        count--;
+        setTimeout(blink, BLINK_INTERVAL);
+    };
+
+    // Blinken starten
+    blink();
+
+    // --- Aufräumen beim Beenden (Strg+C) ---
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+
+} catch (error) {
+    console.error("Ein Fehler ist aufgetreten:", error);
     process.exit(1);
 }
-
-// Alle LEDs ausschalten (auf HIGH setzen)
-function turnOffLeds() {
-    ledRed.writeSync(1);
-    ledGreen.writeSync(1);
-    ledBlue.writeSync(1);
-}
-
-// Eine Farbe setzen (r, g, b sind entweder 0 für AN oder 1 für AUS)
-function setColor(r: 0 | 1, g: 0 | 1, b: 0 | 1) {
-    ledRed.writeSync(r);
-    ledGreen.writeSync(g);
-    ledBlue.writeSync(b);
-}
-
-// Zufällige Farbe generieren
-function randomColor() {
-    // Math.random() < 0.5 gibt true/false. 
-    // Da wir "Active Low" haben: 
-    // true -> 0 (AN)
-    // false -> 1 (AUS)
-    const r = Math.random() < 0.5 ? 0 : 1;
-    const g = Math.random() < 0.5 ? 0 : 1;
-    const b = Math.random() < 0.5 ? 0 : 1;
-
-    console.log(`Neue Farbe (Active Low): R=${r}, G=${g}, B=${b}`);
-    setColor(r, g, b);
-}
-
-console.log("Programm gestartet! Drücke den Button...");
-turnOffLeds(); // Startzustand: Aus
-
-// --- Event Listener ---
-
-button.watch((err, value) => {
-    if (err) {
-        console.error('Es gab einen Fehler beim Button:', err);
-        return;
-    }
-
-    // value ist 0, wenn der Button gedrückt ist (Verbindung zu GND)
-    console.log('Button wurde gedrückt!');
-    randomColor();
-});
-
-// --- Aufräumen beim Beenden (Strg+C) ---
-process.on('SIGINT', () => {
-    console.log('\nBeende Programm und gebe Pins frei...');
-    ledRed.unexport();
-    ledGreen.unexport();
-    ledBlue.unexport();
-    button.unexport();
-    process.exit();
-});
