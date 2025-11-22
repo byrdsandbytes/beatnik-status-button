@@ -3,7 +3,7 @@ from signal import pause
 import random
 
 # --- Konfiguration ---
-MAX_BRIGHTNESS = 0.5  # Maximale Helligkeit (0.0 bis 1.0)
+MAX_BRIGHTNESS = 0.2  # Maximale Helligkeit (0.0 bis 1.0)
 PULSE_MODE = True     # True, um den Puls-Effekt zu aktivieren
 
 # --- Konfiguration der Pins (BCM Nummerierung) ---
