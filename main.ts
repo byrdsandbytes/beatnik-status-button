@@ -8,16 +8,36 @@ const PIN_BUTTON = 26;
 
 // --- Initialisierung ---
 
-// LEDs als Ausgang ('out')
-// Wir setzen sie initial auf 1 (HIGH), damit sie AUS sind (wegen Common Anode)
-const ledRed = new Gpio(PIN_RED, 'out');
-const ledGreen = new Gpio(PIN_GREEN, 'out');
-const ledBlue = new Gpio(PIN_BLUE, 'out');
+// --- Initialisierung ---
 
-// Button als Eingang ('in')
-// 'falling' bedeutet: Wir horchen auf den Moment, wenn der Knopf gedrückt wird (Verbindung zu GND)
-// debounceTimeout: Verhindert, dass ein Druck als 10x Drücken erkannt wird (Entprellen)
-const button = new Gpio(PIN_BUTTON, 'in', 'falling', { debounceTimeout: 50 });
+let ledRed: Gpio;
+let ledGreen: Gpio;
+let ledBlue: Gpio;
+let button: Gpio;
+
+try {
+    // LEDs als Ausgang ('out')
+    // Wir setzen sie initial auf 1 (HIGH), damit sie AUS sind (wegen Common Anode)
+    ledRed = new Gpio(PIN_RED, 'out');
+    ledGreen = new Gpio(PIN_GREEN, 'out');
+    ledBlue = new Gpio(PIN_BLUE, 'out');
+
+    // Button als Eingang ('in')
+    // 'falling' bedeutet: Wir horchen auf den Moment, wenn der Knopf gedrückt wird (Verbindung zu GND)
+    // debounceTimeout: Verhindert, dass ein Druck als 10x Drücken erkannt wird (Entprellen)
+    button = new Gpio(PIN_BUTTON, 'in', 'falling', { debounceTimeout: 50 });
+} catch (err: any) {
+    console.error("Fehler beim Initialisieren der GPIOs:", err.message);
+    if (err.code === 'EINVAL') {
+        console.error("\n--- FEHLER DIAGNOSE ---");
+        console.error("Der Fehler 'EINVAL' beim Exportieren von GPIOs deutet oft darauf hin, dass:");
+        console.error("1. Du einen Raspberry Pi 5 verwendest (dieser nutzt einen anderen GPIO-Chip).");
+        console.error("2. Die Pin-Nummer für dieses Gerät ungültig ist.");
+        console.error("3. Der Pin bereits vom Kernel belegt ist.");
+        console.error("-----------------------\n");
+    }
+    process.exit(1);
+}
 
 // Alle LEDs ausschalten (auf HIGH setzen)
 function turnOffLeds() {
