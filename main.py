@@ -12,7 +12,7 @@ PIN_BUTTON = 26
 # Farben als (R, G, B) Tupel, wobei die Werte von 0.0 bis 1.0 reichen.
 # gpiozero kümmert sich um die Umrechnung für Common-Anode-LEDs.
 STATE_COLORS = {
-    "NO_CONNECTION": (1.0, 0.5, 0.0),  # Amber
+    "NO_CONNECTION": (1.0, 0.75, 0.0),  # Amber
     "BLUETOOTH_CONNECTED": (0.0, 0.0, 1.0),  # Blue
     "WIFI_CONNECTED": (0.0, 1.0, 0.0),  # Green
     "ERROR": (1.0, 0.0, 0.0),  # Red
