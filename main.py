@@ -2,6 +2,10 @@ from gpiozero import RGBLED, Button
 from signal import pause
 import random
 
+# --- Konfiguration ---
+MAX_BRIGHTNESS = 0.5  # Maximale Helligkeit (0.0 bis 1.0)
+PULSE_MODE = True     # True, um den Puls-Effekt zu aktivieren
+
 # --- Konfiguration der Pins (BCM Nummerierung) ---
 # Make sure to install gpiozero first:
 # sudo apt update
@@ -26,16 +30,27 @@ button = Button(PIN_BUTTON, pull_up=True)
 # Zufällige Farbe generieren und setzen
 def set_random_color():
     """Generiert eine zufällige Farbe und setzt sie auf der LED."""
-    r = random.random() # Zufälliger Wert zwischen 0.0 und 1.0
-    g = random.random()
-    b = random.random()
+    r = random.uniform(0, MAX_BRIGHTNESS)
+    g = random.uniform(0, MAX_BRIGHTNESS)
+    b = random.uniform(0, MAX_BRIGHTNESS)
     print(f"Neue Farbe: R={r:.2f}, G={g:.2f}, B={b:.2f}")
     led.color = (r, g, b)
 
+def pulse_random_color():
+    """Lässt die LED in einer zufälligen Farbe pulsieren."""
+    r = random.uniform(0, MAX_BRIGHTNESS)
+    g = random.uniform(0, MAX_BRIGHTNESS)
+    b = random.uniform(0, MAX_BRIGHTNESS)
+    print(f"Pulsierende Farbe: R={r:.2f}, G={g:.2f}, B={b:.2f}")
+    led.pulse(fade_in_time=1, fade_out_time=1, on_color=(r, g, b), off_color=(0, 0, 0), n=1, background=True)
+
 # --- Event-Handler ---
 
-# Die Funktion 'set_random_color' wird aufgerufen, wenn der Button gedrückt wird.
-button.when_pressed = set_random_color
+# Die Funktion 'set_random_color' oder 'pulse_random_color' wird aufgerufen, wenn der Button gedrückt wird.
+if PULSE_MODE:
+    button.when_pressed = pulse_random_color
+else:
+    button.when_pressed = set_random_color
 
 # --- Hauptprogramm ---
 
