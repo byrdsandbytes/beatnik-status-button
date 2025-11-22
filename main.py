@@ -17,10 +17,10 @@ STATE_COLORS = {
     # Amber (Adjusted for common LED physics)
     # Note: Pure (255, 191, 0) might look too green on an LED.
     # I lowered Green to 100 here for a better "Amber" look.
-    "NO_CONNECTION":       rgb(255, 100, 0),  
+    "NO_CONNECTION":       rgb(245, 243, 232),  
     
     "BLUETOOTH_CONNECTED": rgb(0, 0, 255),    
-    "WIFI_CONNECTED":      rgb(0, 255, 0),    
+    "WIFI_CONNECTED":      rgb(151, 183, 152),    
     "ERROR":               rgb(255, 0, 0),    
 }
 
