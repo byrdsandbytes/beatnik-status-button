@@ -43,7 +43,6 @@ def pulse_random_color():
     b = random.uniform(0, MAX_BRIGHTNESS)
     print(f"Pulsierende Farbe: R={r:.2f}, G={g:.2f}, B={b:.2f}")
     led.pulse(fade_in_time=3, fade_out_time=3, on_color=(r, g, b), off_color=(0, 0, 0), n=1, background=True)
-    led.pulse(fade_in_time=1, fade_out_time=1, on_color=(r, g, b), off_color=(0, 0, 0), n=1, background=True)
 
 # --- Event-Handler ---
 
